@@ -62,5 +62,27 @@ pub fn run() {
     println!(
         "{:?}",
         possible_games_star_1.iter().map(|(x, _)| x).sum::<i32>()
-    )
+    );
+
+    // star 2
+    let powers_star_2: Vec<i32> = parsed_games
+        .iter()
+        .map(|(_, draws)| {
+            let mut minimum_cubes = HashMap::from([("red", 0), ("green", 0), ("blue", 0)]);
+
+            for draw in draws {
+                for (color, count) in draw.iter() {
+                    let minimum_for_color = minimum_cubes.get(color).unwrap();
+
+                    if count > minimum_for_color {
+                        minimum_cubes.insert(color, *count);
+                    }
+                }
+            }
+
+            minimum_cubes.values().product()
+        })
+        .collect();
+
+    println!("{:?}", powers_star_2.iter().sum::<i32>())
 }
