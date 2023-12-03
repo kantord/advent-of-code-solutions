@@ -1,4 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    u32,
+};
 
 use crate::utils;
 
@@ -10,6 +13,7 @@ pub fn run() {
     let mut which_integer_at_position: HashMap<(i32, i32), i32> = HashMap::new();
     let mut number_values: HashMap<i32, u32> = HashMap::new();
     let mut symbol_positions: HashSet<(i32, i32)> = HashSet::new();
+    let mut potential_gears: HashMap<(i32, i32), HashSet<i32>> = HashMap::new();
 
     for line in raw_lines {
         for (x, c) in line.chars().enumerate() {
@@ -26,6 +30,10 @@ pub fn run() {
 
             if !c.is_digit(10) && c != '.' {
                 symbol_positions.insert(position);
+
+                if c == '*' {
+                    potential_gears.insert(position, HashSet::new());
+                }
             }
         }
 
@@ -48,22 +56,43 @@ pub fn run() {
                     continue;
                 }
 
-                if symbol_positions.contains(&(x + dx, y + dy)) {
+                let key = &(x + dx, y + dy);
+
+                if symbol_positions.contains(key) {
                     number_ids_adjacent_to_symbols.insert(*number_id);
+                }
+
+                if potential_gears.contains_key(key) {
+                    potential_gears.get_mut(key).unwrap().insert(*number_id);
                 }
             }
         }
     }
 
-    println!("{:?}", which_integer_at_position);
-    println!("{:?}", number_values);
-    println!("{:?}", symbol_positions);
-    println!("{:?}", number_ids_adjacent_to_symbols);
     println!(
         "{:?}",
         number_ids_adjacent_to_symbols
             .iter()
             .map(|id| number_values.get(id).unwrap())
+            .sum::<u32>()
+    );
+
+    let gears: Vec<&_> = potential_gears
+        .values()
+        .into_iter()
+        .filter(|values| values.len() == 2)
+        .collect();
+
+    println!("{:?}", gears);
+
+    println!(
+        "{:?}",
+        gears
+            .iter()
+            .map(|values| values
+                .into_iter()
+                .map(|id| number_values.get(id).unwrap())
+                .product::<u32>())
             .sum::<u32>()
     );
 }
