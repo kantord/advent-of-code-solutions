@@ -4,7 +4,7 @@ use std::{collections::HashMap, iter::zip};
 fn count_items_in_hand(hand: Vec<i32>) -> Vec<i32> {
     let mut result = HashMap::new();
 
-    for item in hand {
+    for item in hand.iter() {
         let count = result.entry(item).or_insert(0);
         *count += 1;
     }
@@ -17,13 +17,32 @@ fn count_items_in_hand(hand: Vec<i32>) -> Vec<i32> {
     finalresult
 }
 
+fn replace_jokers(hand: Vec<i32>) -> Vec<i32> {
+    let mut result = HashMap::new();
+
+    for item in hand.iter() {
+        let count = result.entry(item).or_insert(0);
+        *count += 1;
+    }
+
+    let mut finalresult: Vec<i32> = result.values().map(|x| x.clone()).collect();
+
+    finalresult.sort();
+    finalresult.reverse();
+
+    println!("{:?}", finalresult);
+
+    hand.into_iter()
+        .map(|c| if c == -1 { finalresult[0] } else { c })
+        .collect()
+}
+
 pub fn run() {
     let raw_lines = utils::read_lines("input/2023/day07.txt");
     let value_scores: HashMap<char, i32> = [
         ('A', 12),
         ('K', 11),
         ('Q', 10),
-        ('J', 9),
         ('T', 8),
         ('9', 7),
         ('8', 6),
@@ -33,6 +52,7 @@ pub fn run() {
         ('4', 2),
         ('3', 1),
         ('2', 0),
+        ('J', -1),
     ]
     .into_iter()
     .collect();
@@ -50,28 +70,14 @@ pub fn run() {
                 .collect();
             let bid: i32 = split_line.next().unwrap().parse().unwrap();
 
-            (hand, bid)
+            (replace_jokers(hand), bid)
         })
         .collect();
 
-    parsed_hands.sort_by_key(|(hand, _)| hand.clone());
     parsed_hands.sort_by_key(|(hand, _)| {
         let hand_counts = count_items_in_hand(hand.clone());
 
-        if hand_counts.len() >= 2 {
-            return hand_counts[1];
-        } else {
-            return 0;
-        }
-    });
-    parsed_hands.sort_by_key(|(hand, _)| {
-        let hand_counts = count_items_in_hand(hand.clone());
-
-        if hand_counts.len() >= 1 {
-            return hand_counts[0];
-        } else {
-            return 0;
-        }
+        return vec![hand_counts, hand.clone()];
     });
 
     println!("{:?}", parsed_hands);
