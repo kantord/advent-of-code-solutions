@@ -1,80 +1,62 @@
-use std::collections::HashMap;
-
 use crate::utils;
 
-fn gcd(a: u64, b: u64) -> u64 {
-    let mut a = a;
-    let mut b = b;
-
-    while a != b {
-        if a > b {
-            a = a - b;
-        } else {
-            b = b - a;
-        }
+fn calculate_next_step(sequence: &Vec<i64>) -> Vec<i64> {
+    let mut result = vec![];
+    for i in 0..(sequence.len() - 1) {
+        result.push(sequence[i + 1] - sequence[i]);
     }
 
-    a
+    result
 }
 
-fn lcm(a: u64, b: u64) -> u64 {
-    a * b / gcd(a, b)
+fn calculate_until_final_row(sequence: &Vec<i64>) -> Vec<Vec<i64>> {
+    let mut result: Vec<Vec<i64>> = vec![sequence.clone()];
+
+    loop {
+        let last_row = result.last().unwrap();
+        if last_row.iter().all(|v| v == &0) {
+            break;
+        }
+        let next_row = calculate_next_step(&last_row);
+
+        result.push(next_row);
+    }
+
+    result
+}
+
+fn add_last_column(sequences: Vec<Vec<i64>>) -> Vec<i64> {
+    let mut results: Vec<i64> = vec![0];
+
+    for sequence in sequences.iter().rev().skip(1) {
+        println!(
+            "sequence {:?} results {:?}",
+            sequence.last().unwrap(),
+            results.last().unwrap()
+        );
+        let next_row = sequence.last().unwrap() + results.last().unwrap();
+        results.push(next_row);
+    }
+
+    results
 }
 
 pub fn run() {
-    let raw_lines = utils::read_lines("input/2023/day08.txt");
-    let instructions = &raw_lines[0];
-
-    let nodes: HashMap<&str, (String, String)> = raw_lines[2..]
-        .iter()
-        .map(|line| {
-            let mut parts = line.split(" = ");
-            let node_name = parts.next().unwrap();
-            let raw_children = parts.next().unwrap();
-
-            let children: Vec<_> = raw_children
-                .split(", ")
-                .map(|child| child.split(", ").next().unwrap())
-                .collect();
-
-            let left = children[0].replace("(", "").clone();
-            let right = children[1].replace(")", "").clone();
-
-            (node_name, (left, right))
-        })
+    let raw_lines = utils::read_lines("input/2023/day09.txt");
+    let initial_sequences: Vec<Vec<i64>> = raw_lines
+        .into_iter()
+        .map(|line| line.split(" ").map(|c| c.parse().unwrap()).collect())
         .collect();
 
-    // println!("{:?}", instructions);
-    // println!("{:?}", nodes);
-
-    let mut positions: Vec<String> = nodes
-        .keys()
-        .filter(|node| node.ends_with("A"))
-        .map(|s| s.to_string())
-        .collect();
-    let mut steps: Vec<u64> = vec![0; positions.len()];
-
-    for i in 0..positions.len() {
-        loop {
-            if positions[i].ends_with("Z") {
-                break;
-            }
-
-            let c = instructions
-                .chars()
-                .nth((steps[i] % (instructions.len() as u64)) as usize)
-                .unwrap();
-
-            steps[i] += 1;
-
-            positions[i] = match c {
-                'L' => nodes[positions[i].as_str()].0.clone(),
-                'R' => nodes[positions[i].as_str()].1.clone(),
-                _ => panic!("Unknown instruction: {}", c),
-            }
-        }
+    let mut _final = 0;
+    for line in initial_sequences.iter() {
+        let until_final_row = calculate_until_final_row(line);
+        println!("until_final_row {:?}", until_final_row);
+        let results = add_last_column(until_final_row);
+        _final += results.last().unwrap();
+        println!("results {:?}", results);
+        println!("---")
     }
 
-    println!("{:?}", steps);
-    println!("{:?}", steps[1..].iter().fold(steps[0], |a, b| lcm(a, *b)));
+    println!("{:?}", _final);
 }
